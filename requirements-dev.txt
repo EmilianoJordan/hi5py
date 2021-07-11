@@ -1,4 +1,5 @@
 black
-pytest
-sphinx
 pandas
+pytest
+pytest-cov
+sphinx
