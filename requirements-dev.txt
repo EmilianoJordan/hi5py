@@ -2,5 +2,6 @@ black
 pandas
 pytest
 pytest-cov
-sphinx
+sphinx ~= 4.1
 isort
+pre-commit ~= 2.13
