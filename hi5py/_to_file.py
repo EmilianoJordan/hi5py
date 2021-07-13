@@ -3,5 +3,5 @@
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-def to_h5py_file(object):
+def _to_hi5py_file(object):
     pass

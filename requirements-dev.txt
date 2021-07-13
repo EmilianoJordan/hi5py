@@ -2,6 +2,9 @@ black
 pandas
 pytest
 pytest-cov
-sphinx ~= 4.1
+sphinx >= 4.1.*
 isort
-pre-commit ~= 2.13
+pre-commit >= 2.13.*
+flake8 >= 3.9.*
+flake8-absolute-import >= 1.*
+flake8-docstrings >=1.6.*
