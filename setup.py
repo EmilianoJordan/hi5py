@@ -8,6 +8,6 @@ https://github.com/cookiecutter/cookiecutter/pull/1577
 import setuptools
 
 setuptools.setup(
-    use_scm_version={"local_scheme": "no-local-version"},
+    use_scm_version=True,
     setup_requires=["setuptools_scm[toml]>=3.5.0"],
 )
