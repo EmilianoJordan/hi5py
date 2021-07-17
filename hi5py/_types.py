@@ -2,24 +2,38 @@
 #   License, v. 2.0. If a copy of the MPL was not distributed with this
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# filenames and file-like-objects
-from io import (
-    BufferedIOBase,
-    RawIOBase,
-    TextIOBase,
-    TextIOWrapper,
-)
-from mmap import mmap
+from collections import Callable
 from os import PathLike
 from typing import (
-    IO,
-    AnyStr,
+    Generic,
+    TypeVar,
     Union,
 )
 
-# Copied from Pandas. Thank you pandas
-Buffer = Union[
-    IO[AnyStr], RawIOBase, BufferedIOBase, TextIOBase, TextIOWrapper, mmap
-]
-FileOrBuffer = Union[str, Buffer[AnyStr]]
-FilePathOrBuffer = Union["PathLike[str]", FileOrBuffer[AnyStr]]
+from h5py import Group
+from numpy.typing import ArrayLike
+from typing_extensions import Literal
+
+T = TypeVar("T")
+
+
+# Custom Stub
+class HasDunderMethods(Generic[T]):
+    def __to_hi5py__(
+        self,
+        group: Group,
+        callback: Callable[[Group, Callable, bool], None],
+        allow_pickle: bool = False,
+    ) -> None:
+        pass
+
+    def __from_hi5py__(
+        self,
+        group: Group,
+        allow_pickle: Literal["raise", "warn", "load"] = "raise",
+    ) -> T:
+        pass
+
+
+FilePathOrGroup = Union[str, PathLike, Group]
+ToFileObjects = Union[HasDunderMethods, ArrayLike]
