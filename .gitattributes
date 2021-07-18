@@ -1,0 +1,11 @@
+* text=auto
+
+*.py text
+*.pyx text
+*.pyd text
+*.rst  text
+*.csv text
+*.json text
+*.pickle binary
+*.h5 binary
+*.hi5 binary
