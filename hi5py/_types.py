@@ -22,15 +22,16 @@ class HasDunderMethods(Generic[T]):
     def __to_hi5py__(
         self,
         group: Group,
-        callback: Callable[[Group, Callable, bool], None],
-        allow_pickle: bool = False,
+        allow_pickle: Literal["raise", "skip", "warn", "save"],
+        callback: Callable[["ToFileObjects", Group, str, Callable], None],
     ) -> None:
         pass
 
     def __from_hi5py__(
         self,
         group: Group,
-        allow_pickle: Literal["raise", "warn", "load"] = "raise",
+        allow_pickle: Literal["raise", "skip", "warn", "load"],
+        callback: Callable[[Group, str, Callable]],
     ) -> T:
         pass
 

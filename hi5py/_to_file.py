@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Union
 
 from h5py import (
     File,
@@ -12,17 +12,20 @@ from h5py import (
 )
 from typing_extensions import Literal
 
-from hi5py._types import FilePathOrGroup
+from hi5py._types import (
+    FilePathOrGroup,
+    ToFileObjects,
+)
 
 
 def to_file(
-    obj: Any,
+    obj: Union[ToFileObjects],
     path_or_group: FilePathOrGroup,
     key: str = ".hi5",
     mode: Literal["w", "a", "r+"] = "w",
     suffix: str = ".hi5",
     append_suffix: bool = True,
-    allow_pickle: bool = False,
+    allow_pickle: Literal["raise", "skip", "warn", "save"] = "raise",
 ):
     """Write `object` to a file.
 
@@ -55,5 +58,5 @@ def to_file(
     return _to_file_router(obj, group, allow_pickle, _to_file_router)
 
 
-def _to_file_router(obj, group, allow_pickle, call_back):
+def _to_file_router(obj, group, allow_pickle, callback):
     pass

@@ -10,9 +10,9 @@ from hi5py._types import FilePathOrGroup
 
 def from_file(
     path: FilePathOrGroup,
-    key: str,
+    key: str = ".hi5",
     mode: Literal["r", "r+", "a"] = "r",
-    allow_pickle: Literal["raise", "warn", "load"] = "raise",
+    allow_pickle: Literal["raise", "skip", "warn", "load"] = "raise",
 ):
     """Read a file and close if we `path` is opened.
 
