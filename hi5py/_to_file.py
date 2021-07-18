@@ -53,10 +53,9 @@ def to_file(
     if not isinstance(path_or_group, Group):
         path_or_group = File(path_or_group, mode=mode)
 
-    group = path_or_group[key]
-
-    return _to_file_router(obj, group, allow_pickle, _to_file_router)
+    return _to_file_router(obj, path_or_group, key, allow_pickle, _to_file_router)
 
 
-def _to_file_router(obj, group, allow_pickle, callback):
-    pass
+def _to_file_router(obj, group, key, allow_pickle, callback):
+    if hasattr(obj, "__to_hi5py__"):
+        obj.__to_hi5py__(group, key, allow_pickle, callback)

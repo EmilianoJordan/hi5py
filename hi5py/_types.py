@@ -20,18 +20,19 @@ T = TypeVar("T")
 # Custom Stub
 class HasDunderMethods(Generic[T]):
     def __to_hi5py__(
-        self,
-        group: Group,
-        allow_pickle: Literal["raise", "skip", "warn", "save"],
-        callback: Callable[["ToFileObjects", Group, str, Callable], None],
+            self,
+            group: Group,
+            key: str,
+            allow_pickle: Literal["raise", "skip", "warn", "save"],
+            callback: Callable[["ToFileObjects", Group, str, str, Callable], None],
     ) -> None:
         pass
 
     def __from_hi5py__(
-        self,
-        group: Group,
-        allow_pickle: Literal["raise", "skip", "warn", "load"],
-        callback: Callable[[Group, str, Callable]],
+            self,
+            group: Group,
+            allow_pickle: Literal["raise", "skip", "warn", "load"],
+            callback: Callable[[Group, str, Callable]],
     ) -> T:
         pass
 
