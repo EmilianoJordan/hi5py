@@ -19,14 +19,14 @@ from hi5py._types import (
 
 
 def to_file(
-    obj: Union[ToFileObjects],
-    path_or_group: FilePathOrGroup,
-    key: str = ".hi5",
-    mode: Literal["w", "a", "r+"] = "w",
-    suffix: str = ".hi5",
-    append_suffix: bool = True,
-    allow_pickle: Literal["raise", "skip", "warn", "save"] = "raise",
-):
+        obj: Union[ToFileObjects],
+        path_or_group: FilePathOrGroup,
+        key: str = ".hi5",
+        mode: Literal["w", "a", "r+"] = "w",
+        suffix: str = ".hi5",
+        append_suffix: bool = True,
+        allow_pickle: Literal["raise", "skip", "warn", "save"] = "raise",
+) -> File:
     """Write `object` to a file.
 
     Parameters
@@ -59,3 +59,4 @@ def to_file(
 def _to_file_router(obj, group, key, allow_pickle, callback):
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(group, key, allow_pickle, callback)
+        return group[key]
