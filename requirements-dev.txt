@@ -2,6 +2,7 @@ black
 flake8 >= 3.9.*
 flake8-absolute-import >= 1.*
 flake8-docstrings >=1.6.*pandas
+hypothesis >= 6.14.5
 isort
 numpydoc >= 1.1.0
 pre-commit >= 2.13.*
