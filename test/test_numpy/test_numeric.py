@@ -1,11 +1,11 @@
 from io import BytesIO
 
-import numpy as np
 from hypothesis import given
 from hypothesis.extra.numpy import (
     arrays,
     integer_dtypes,
 )
+import numpy as np
 
 from hi5py import (
     from_file,
