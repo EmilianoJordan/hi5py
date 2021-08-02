@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
 
 from h5py import (
     File,
@@ -13,16 +12,16 @@ from h5py import (
 from numpy import ndarray
 from typing_extensions import Literal
 
+from hi5py import __hi5_file_version__
 from hi5py._types import (
-    FilePathOrGroup,
+    FilePathBufferOrGroup,
     ToFileObjects,
 )
-from hi5py import __hi5_file_version__
 
 
 def to_file(
-        obj: Union[ToFileObjects],
-        path_or_group: FilePathOrGroup,
+        obj: ToFileObjects,
+        path_or_group: FilePathBufferOrGroup,
         key: str = ".hi5",
         mode: Literal["w", "a", "r+"] = "w",
         suffix: str = ".hi5",
@@ -49,15 +48,21 @@ def to_file(
     if isinstance(path_or_group, str):
         path_or_group = Path(path_or_group)
 
-    if append_suffix and suffix != path_or_group.suffix:
+    if (
+            append_suffix
+            and isinstance(path_or_group, Path)
+            and suffix != path_or_group.suffix
+    ):
         path_or_group = path_or_group.with_suffix(suffix)
 
     if not isinstance(path_or_group, (Group, File)):
         path_or_group = File(path_or_group, mode=mode)
 
-    path_or_group.attrs['__hi5_file_version__'] = __hi5_file_version__
+    path_or_group.attrs["__hi5_file_version__"] = __hi5_file_version__
 
-    return _to_file_router(obj, path_or_group, key, allow_pickle, _to_file_router)
+    return _to_file_router(
+        obj, path_or_group, key, allow_pickle, _to_file_router
+    )
 
 
 def _to_file_router(obj, group, key, allow_pickle, callback):
@@ -70,4 +75,13 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
 
 def _to_numpy_array(obj, group, key, allow_pickle, callback):
     group[key] = obj
-    pass
+
+    group[key].attrs.update(
+        __python_class__=_get_python_class(obj),
+        __dtype__=str(obj.dtype)
+    )
+
+
+
+def _get_python_class(obj):
+    return str(type(obj)).split("'")[1]

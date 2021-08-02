@@ -5,11 +5,11 @@ from __future__ import annotations
 
 from typing_extensions import Literal
 
-from hi5py._types import FilePathOrGroup
+from hi5py._types import FilePathBufferOrGroup
 
 
 def from_file(
-    path: FilePathOrGroup,
+    path: FilePathBufferOrGroup,
     key: str = ".hi5",
     mode: Literal["r", "r+", "a"] = "r",
     allow_pickle: Literal["raise", "skip", "warn", "load"] = "raise",

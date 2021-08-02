@@ -1,10 +1,11 @@
 #   This Source Code Form is subject to the terms of the Mozilla Public
 #   License, v. 2.0. If a copy of the MPL was not distributed with this
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-from typing import Callable, Any
+from io import BufferedIOBase
 from os import PathLike
 from typing import (
+    Any,
+    Callable,
     Generic,
     TypeVar,
     Union,
@@ -20,22 +21,23 @@ T = TypeVar("T")
 # Custom Stub
 class HasDunderMethods(Generic[T]):
     def __to_hi5py__(
-            self,
-            group: Group,
-            key: str,
-            allow_pickle: Literal["raise", "skip", "warn", "save"],
-            callback: Callable[["ToFileObjects", Group, str, str, Callable], None],
+        self,
+        group: Group,
+        key: str,
+        allow_pickle: Literal["raise", "skip", "warn", "save"],
+        callback: Callable[["ToFileObjects", Group, str, str, Callable], None],
     ) -> None:
         pass
 
     def __from_hi5py__(
-            self,
-            group: Group,
-            allow_pickle: Literal["raise", "skip", "warn", "load"],
-            callback: Callable[[Group, str, Callable], Any],
+        self,
+        group: Group,
+        allow_pickle: Literal["raise", "skip", "warn", "load"],
+        callback: Callable[[Group, str, Callable], Any],
     ) -> T:
         pass
 
 
-FilePathOrGroup = Union[str, PathLike, Group]
+PathOrBuffer = Union[PathLike, BufferedIOBase]
+FilePathBufferOrGroup = Union[str, PathOrBuffer, Group]
 ToFileObjects = Union[HasDunderMethods, ArrayLike]
