@@ -4,5 +4,6 @@
 
 # flake8: noqa
 
+from hi5py._version import __hi5_file_version__ #isort:skip
 from hi5py._from_file import from_file
 from hi5py._to_file import to_file

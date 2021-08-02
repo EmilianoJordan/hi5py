@@ -10,12 +10,14 @@ from h5py import (
     File,
     Group,
 )
+from numpy import ndarray
 from typing_extensions import Literal
 
 from hi5py._types import (
     FilePathOrGroup,
     ToFileObjects,
 )
+from hi5py import __hi5_file_version__
 
 
 def to_file(
@@ -43,15 +45,17 @@ def to_file(
     -------
 
     """
-    if append_suffix:
-        if isinstance(path_or_group, str):
-            path_or_group = Path(path_or_group)
 
-        if suffix != path_or_group.suffix:
-            path_or_group = path_or_group.with_suffix(suffix)
+    if isinstance(path_or_group, str):
+        path_or_group = Path(path_or_group)
 
-    if not isinstance(path_or_group, Group):
+    if append_suffix and suffix != path_or_group.suffix:
+        path_or_group = path_or_group.with_suffix(suffix)
+
+    if not isinstance(path_or_group, (Group, File)):
         path_or_group = File(path_or_group, mode=mode)
+
+    path_or_group.attrs['__hi5_file_version__'] = __hi5_file_version__
 
     return _to_file_router(obj, path_or_group, key, allow_pickle, _to_file_router)
 
@@ -60,3 +64,10 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(group, key, allow_pickle, callback)
         return group[key]
+    elif isinstance(obj, ndarray):
+        _to_numpy_array(obj, group, key, allow_pickle, callback)
+
+
+def _to_numpy_array(obj, group, key, allow_pickle, callback):
+    group[key] = obj
+    pass

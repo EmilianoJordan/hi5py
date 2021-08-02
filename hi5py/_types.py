@@ -2,7 +2,7 @@
 #   License, v. 2.0. If a copy of the MPL was not distributed with this
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from collections import Callable
+from typing import Callable, Any
 from os import PathLike
 from typing import (
     Generic,
@@ -32,7 +32,7 @@ class HasDunderMethods(Generic[T]):
             self,
             group: Group,
             allow_pickle: Literal["raise", "skip", "warn", "load"],
-            callback: Callable[[Group, str, Callable]],
+            callback: Callable[[Group, str, Callable], Any],
     ) -> T:
         pass
 
