@@ -7,7 +7,11 @@ from h5py import (
     File,
     Group,
 )
-from numpy import ndarray
+import numpy as np
+from numpy import (
+    generic,
+    ndarray,
+)
 from typing_extensions import Literal
 
 from hi5py import __hi5_file_version__
@@ -52,16 +56,25 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(group, key, allow_pickle, callback)
         return group[key]
-    elif isinstance(obj, ndarray):
+    elif isinstance(obj, (ndarray, generic)):
         _to_numpy_array(obj, group, key, allow_pickle, callback)
 
 
 def _to_numpy_array(obj, group, key, allow_pickle, callback):
-    group[key] = obj
+    attrs = {
+        "__python_class__": _get_python_class(obj),
+        "__dtype__": str(obj.dtype),
+        "__bytes__": False,
+    }
 
-    group[key].attrs.update(
-        __python_class__=_get_python_class(obj), __dtype__=str(obj.dtype)
-    )
+    try:
+        group[key] = obj
+    except TypeError:
+        group[key] = np.void(obj.tobytes())
+        attrs["__bytes__"] = True
+        # @TODO need to add a __shape__ attribute here but it'll be a tuple. So...
+
+    group[key].attrs.update(attrs)
 
 
 def _get_python_class(obj):

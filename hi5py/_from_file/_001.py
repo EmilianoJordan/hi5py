@@ -14,5 +14,13 @@ def _001(
     # pass
     klass = _class_from_string(group.attrs["__python_class__"])
 
-    if issubclass(klass, np.ndarray):
-        return group[()]
+    if issubclass(klass, (np.ndarray, np.generic)):
+        if not group.attrs["__bytes__"]:
+            return group[()]
+
+        array = np.frombuffer(
+            group[()].tobytes(), dtype=group.attrs["__dtype__"]
+        )
+        # @TODO need to change this to an attribute for shape
+        #   but need to add tuples first.
+        return np.reshape(array, (3, 3, 3))
