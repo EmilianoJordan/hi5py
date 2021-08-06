@@ -65,6 +65,7 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
         "__python_class__": _get_python_class(obj),
         "__dtype__": str(obj.dtype),
         "__bytes__": False,
+        "__array__": isinstance(obj, ndarray),
     }
 
     try:

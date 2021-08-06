@@ -23,4 +23,6 @@ def _001(
         )
         # @TODO need to change this to an attribute for shape
         #   but need to add tuples first.
-        return np.reshape(array, (3, 3, 3))
+        if group.attrs["__array__"]:
+            return np.reshape(array, (3, 3, 3))
+        return array
