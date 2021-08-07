@@ -53,11 +53,25 @@ def to_file(
 
 
 def _to_file_router(obj, group, key, allow_pickle, callback):
+
+    args = (obj, group, key, allow_pickle, callback)
+
     if hasattr(obj, "__to_hi5py__"):
-        obj.__to_hi5py__(group, key, allow_pickle, callback)
+        obj.__to_hi5py__(*args)
         return group[key]
     elif isinstance(obj, (ndarray, generic)):
-        _to_numpy_array(obj, group, key, allow_pickle, callback)
+        _to_numpy_array(*args)
+    elif isinstance(obj, (list, tuple)):
+        _to_tuple_list(*args)
+    else:
+        # @TODO Need to incorporate pickle option here.
+        # @TODO Think about options for error handling. Might be nice
+        #   to offer some ability to capture or handle errors.
+        raise TypeError("Cannot save data type.")
+
+
+def _get_python_class(obj):
+    return str(type(obj)).split("'")[1]
 
 
 def _to_numpy_array(obj, group, key, allow_pickle, callback):
@@ -78,5 +92,5 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
     group[key].attrs.update(attrs)
 
 
-def _get_python_class(obj):
-    return str(type(obj)).split("'")[1]
+def _to_tuple_list(obj, group, key, allow_pickle, callback):
+    pass
