@@ -15,4 +15,8 @@ def _class_from_string(class_string: str):
         except (ModuleNotFoundError, AttributeError):
             continue
 
+    might_be_class = __builtins__[klass]
+    if might_be_class is not None:
+        return might_be_class
+
     raise ImportError(f"Cannot load '{class_string}'")

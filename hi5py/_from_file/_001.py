@@ -14,6 +14,9 @@ def _001(
     # pass
     klass = _class_from_string(group.attrs["__python_class__"])
 
+    if hasattr(klass, "__from_hi5py__"):
+        return klass.__from_hi5py__(group, allow_pickle)
+
     if issubclass(klass, (np.ndarray, np.generic)):
         if not group.attrs["__bytes__"]:
             return group[()]
@@ -26,3 +29,13 @@ def _001(
         if group.attrs["__array__"]:
             return np.reshape(array, (3, 3, 3))
         return array
+    elif issubclass(klass, (tuple, list)):
+        return from_list_tople(group, allow_pickle, klass)
+
+
+def from_list_tople(group, allow_pickle, klass):
+    if group.attrs["__as_array__"]:
+        element_klass = _class_from_string(group.attrs["__element_class__"])
+        return klass(element_klass(i) for i in group[()])
+    else:
+        raise NotImplementedError("Haven't implemented complex tuples yet.")

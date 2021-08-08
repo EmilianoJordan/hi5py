@@ -113,8 +113,8 @@ def test_byte_string_arrays(a: np.ndarray):
     a = a.reshape(a.size)
     result = result.reshape(result.size)
 
-    for i, a_i in enumerate(a):
-        assert a_i == result[i]
+    for a_i, result_i in zip(a, result):
+        assert a_i == result_i
 
 
 @given(a=arrays(unicode_string_dtypes(), (3, 3, 3)))
@@ -130,5 +130,5 @@ def test_unicode_string_arrays(a):
     a = a.reshape(a.size)
     result = result.reshape(result.size)
 
-    for i, a_i in enumerate(a):
-        assert a_i == result[i]
+    for a_i, result_i in zip(a, result):
+        assert a_i == result_i

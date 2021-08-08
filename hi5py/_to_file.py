@@ -93,4 +93,28 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
 
 
 def _to_tuple_list(obj, group, key, allow_pickle, callback):
-    pass
+    # @TODO this is going to need to be adjusted for empty tuples.
+    attrs = {
+        "__python_class__": _get_python_class(obj),
+        "__as_array__": False,
+        "__element_class__": None,
+    }
+
+    try:
+
+        klasses = {_get_python_class(i) for i in obj}
+
+        if len(klasses) > 1:
+            raise TypeError(
+                "Numpy casting is only going to be implemented "
+                "for homogeneous tuples and lists."
+            )
+
+        attrs["__element_class__"] = klasses.pop()
+        obj_as_array = np.array(obj)
+        group[key] = obj_as_array
+        attrs["__as_array__"] = True
+        group[key].attrs.update(attrs)
+
+    except TypeError:
+        raise NotImplementedError("Haven't implemented complex tuples yet.")
