@@ -2,6 +2,7 @@ from io import BytesIO
 
 from hypothesis import given
 from hypothesis.extra.numpy import (
+    array_shapes,
     arrays,
     byte_string_dtypes,
     complex_number_dtypes,
@@ -119,6 +120,25 @@ def test_byte_string_arrays(a: np.ndarray):
 
 @given(a=arrays(unicode_string_dtypes(), (3, 3, 3)))
 def test_unicode_string_arrays(a):
+    buffer = BytesIO()
+    to_file(a, buffer)
+
+    result = from_file(buffer)
+
+    assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "array shapes do not match."
+
+    a = a.reshape(a.size)
+    result = result.reshape(result.size)
+
+    for a_i, result_i in zip(a, result):
+        assert a_i == result_i
+
+
+@given(a=arrays(unicode_string_dtypes(), array_shapes()))
+def test_unique_shapes(a):
+    # This test needs to force to/from file to take the tobytes path for numpy so
+    # that the reshape command is used.
     buffer = BytesIO()
     to_file(a, buffer)
 

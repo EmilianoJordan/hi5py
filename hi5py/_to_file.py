@@ -80,6 +80,7 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
         "__dtype__": str(obj.dtype),
         "__bytes__": False,
         "__array__": isinstance(obj, ndarray),
+        "__shape__": None,
     }
 
     try:
@@ -87,7 +88,7 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
     except TypeError:
         group[key] = np.void(obj.tobytes())
         attrs["__bytes__"] = True
-        # @TODO need to add a __shape__ attribute here but it'll be a tuple. So...
+        attrs["__shape__"] = obj.shape
 
     group[key].attrs.update(attrs)
 

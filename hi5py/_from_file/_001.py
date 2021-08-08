@@ -24,10 +24,8 @@ def _001(
         array = np.frombuffer(
             group[()].tobytes(), dtype=group.attrs["__dtype__"]
         )
-        # @TODO need to change this to an attribute for shape
-        #   but need to add tuples first.
         if group.attrs["__array__"]:
-            return np.reshape(array, (3, 3, 3))
+            return np.reshape(array, group.attrs["__shape__"])
         return array
     elif issubclass(klass, (tuple, list)):
         return from_list_tople(group, allow_pickle, klass)
