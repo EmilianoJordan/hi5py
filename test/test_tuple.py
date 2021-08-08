@@ -1,14 +1,19 @@
 from io import BytesIO
 
+from hypothesis import (
+    given,
+    strategies as st,
+)
+
 from hi5py import (
     from_file,
     to_file,
 )
 
 
-def test_numeric_tuple():
+@given(t=st.tuples(st.integers()))
+def test_numeric_tuple(t):
     buffer = BytesIO()
-    t = tuple(range(10))
 
     to_file(t, buffer)
 

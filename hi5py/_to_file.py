@@ -53,7 +53,6 @@ def to_file(
 
 
 def _to_file_router(obj, group, key, allow_pickle, callback):
-
     args = (obj, group, key, allow_pickle, callback)
 
     if hasattr(obj, "__to_hi5py__"):
@@ -116,6 +115,13 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         group[key] = obj_as_array
         attrs["__as_array__"] = True
         group[key].attrs.update(attrs)
-
+        return
     except TypeError:
-        raise NotImplementedError("Haven't implemented complex tuples yet.")
+        pass
+
+    padding = len(str(len(obj)))
+    for i, o in enumerate(obj):
+        key = f"{key}/{i:0{padding}}"
+        callback(o, group, key, allow_pickle, callback)
+
+    group[key].attrs.update(attrs)
