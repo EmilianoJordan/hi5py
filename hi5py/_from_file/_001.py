@@ -15,8 +15,9 @@ def _001(
     klass = _class_from_string(group.attrs["__python_class__"])
 
     if hasattr(klass, "__from_hi5py__"):
-        return klass.__from_hi5py__(group, allow_pickle)
-
+        return klass.__from_hi5py__(group, allow_pickle, klass, _001)
+    if issubclass(klass, int):
+        return int(group[()])
     if issubclass(klass, (np.ndarray, np.generic)):
         if not group.attrs["__bytes__"]:
             return group[()]
@@ -28,12 +29,19 @@ def _001(
             return np.reshape(array, group.attrs["__shape__"])
         return array
     elif issubclass(klass, (tuple, list)):
-        return from_list_tople(group, allow_pickle, klass)
+        return from_list_tuple(group, allow_pickle, klass, _001)
 
 
-def from_list_tople(group, allow_pickle, klass):
+def from_list_tuple(group, allow_pickle, klass, callback):
     if group.attrs["__as_array__"]:
         element_klass = _class_from_string(group.attrs["__element_class__"])
         return klass(element_klass(i) for i in group[()])
-    else:
-        raise NotImplementedError("Haven't implemented complex tuples yet.")
+
+    try:
+        return klass(
+            callback(group[key], allow_pickle) for key in group.keys()
+        )
+    except AttributeError:
+        # groups with no keys were passed in as an empty tuple / list.
+        # h5py does not return no keys it throws an AttributeError in this case.
+        return klass()

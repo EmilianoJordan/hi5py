@@ -59,7 +59,6 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
 
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(*args)
-        return group[key]
     elif isinstance(obj, int):
         _to_int(*args)
     elif isinstance(obj, (ndarray, generic)):
@@ -71,6 +70,7 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
         # @TODO Think about options for error handling. Might be nice
         #   to offer some ability to capture or handle errors.
         raise TypeError("Cannot save data type.")
+    return group[key]
 
 
 def _get_python_class(obj):
@@ -80,19 +80,17 @@ def _get_python_class(obj):
 def _to_int(obj, group, key, allow_pickle, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
-        "__pickled__": False,
     }
     try:
         group[key] = obj
         group[key].attrs.update(attrs)
-        return
+        return group[key]
     except TypeError:
         pass
 
-    if allow_pickle == "save":
-        _handle_pickle(obj, group, key, allow_pickle, callback)
-        attrs["__pickled__"] = True
-        return
+    group[key] = str(obj)
+    group[key].attrs.update(attrs)
+    return group[key]
 
 
 def _handle_pickle(obj, group, key, allow_pickle, callback):
@@ -107,7 +105,7 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
         "__dtype__": str(obj.dtype),
         "__bytes__": False,
         "__array__": isinstance(obj, ndarray),
-        "__shape__": None,
+        "__shape__": 0,
         "__pickled__": False,
     }
 
@@ -126,7 +124,7 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
         "__as_array__": False,
-        "__element_class__": None,
+        "__element_class__": 0,
         "__pickled__": False,
     }
 
@@ -146,12 +144,19 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         attrs["__as_array__"] = True
         group[key].attrs.update(attrs)
         return
-    except TypeError:
+    except (TypeError, KeyError):
+        # TypeError: `group[key] = obj_as_array` if the object is not saveable as an
+        #             array.
+        # KeyError: `klasses.pop()` if an empty tuple is passed in.
         pass
 
-    padding = len(str(len(obj)))
-    for i, o in enumerate(obj):
-        key = f"{key}/{i:0{padding}}"
-        callback(o, group, key, allow_pickle, callback)
+    elements = len(obj)
+    if elements > 0:
+        padding = len(str(elements))
+        for i, o in enumerate(obj):
+            sub_key = f"{key}/{i:0{padding}}"
+            callback(o, group, sub_key, allow_pickle, callback)
+    else:
+        group[key] = 0
 
     group[key].attrs.update(attrs)
