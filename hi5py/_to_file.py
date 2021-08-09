@@ -3,6 +3,8 @@
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+from pickle import dumps
+
 from h5py import (
     File,
     Group,
@@ -58,6 +60,8 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(*args)
         return group[key]
+    elif isinstance(obj, int):
+        _to_int(*args)
     elif isinstance(obj, (ndarray, generic)):
         _to_numpy_array(*args)
     elif isinstance(obj, (list, tuple)):
@@ -73,6 +77,30 @@ def _get_python_class(obj):
     return str(type(obj)).split("'")[1]
 
 
+def _to_int(obj, group, key, allow_pickle, callback):
+    attrs = {
+        "__python_class__": _get_python_class(obj),
+        "__pickled__": False,
+    }
+    try:
+        group[key] = obj
+        group[key].attrs.update(attrs)
+        return
+    except TypeError:
+        pass
+
+    if allow_pickle == "save":
+        _handle_pickle(obj, group, key, allow_pickle, callback)
+        attrs["__pickled__"] = True
+        return
+
+
+def _handle_pickle(obj, group, key, allow_pickle, callback):
+    if allow_pickle == "save":
+        byte_string = np.void(dumps(obj))
+        group[key] = byte_string
+
+
 def _to_numpy_array(obj, group, key, allow_pickle, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
@@ -80,6 +108,7 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
         "__bytes__": False,
         "__array__": isinstance(obj, ndarray),
         "__shape__": None,
+        "__pickled__": False,
     }
 
     try:
@@ -98,6 +127,7 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         "__python_class__": _get_python_class(obj),
         "__as_array__": False,
         "__element_class__": None,
+        "__pickled__": False,
     }
 
     try:
