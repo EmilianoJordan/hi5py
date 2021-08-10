@@ -16,8 +16,8 @@ def _001(
 
     if hasattr(klass, "__from_hi5py__"):
         return klass.__from_hi5py__(group, allow_pickle, klass, _001)
-    if issubclass(klass, int):
-        return int(group[()])
+    if issubclass(klass, (int, float, complex)):
+        return klass(group[()])
     if issubclass(klass, (np.ndarray, np.generic)):
         if not group.attrs["__bytes__"]:
             return group[()]

@@ -59,8 +59,8 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
 
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(*args)
-    elif isinstance(obj, int):
-        _to_int(*args)
+    elif isinstance(obj, (int, float, complex)):
+        _to_numeric(*args)
     elif isinstance(obj, (ndarray, generic)):
         _to_numpy_array(*args)
     elif isinstance(obj, (list, tuple)):
@@ -77,7 +77,7 @@ def _get_python_class(obj):
     return str(type(obj)).split("'")[1]
 
 
-def _to_int(obj, group, key, allow_pickle, callback):
+def _to_numeric(obj, group, key, allow_pickle, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
     }
