@@ -1,4 +1,5 @@
 from io import BytesIO
+from string import printable
 
 from hypothesis import (
     example,
@@ -13,7 +14,11 @@ from hi5py import (
 )
 
 
-@given(t=st.tuples(st.integers()))
+@given(
+    t=st.tuples(
+        st.integers() | st.floats() | st.complex_numbers(), st.text(printable)
+    )
+)
 @example(tuple())
 def test_int_tuple(t):
     buffer = BytesIO()
@@ -24,49 +29,10 @@ def test_int_tuple(t):
 
     for t_i, result_i in zip(t, result):
         assert type(t_i) is type(result_i)
-        assert t_i == result_i or t_i is result_i
+        try:
+            if np.isnan(t_i) and np.isnan(result_i):
+                continue
+        except TypeError:
+            pass
 
-
-@given(t=st.tuples(st.floats()))
-def test_float_tuple(t):
-    buffer = BytesIO()
-
-    to_file(t, buffer)
-
-    result = from_file(buffer)
-
-    for t_i, result_i in zip(t, result):
-        assert type(t_i) is type(result_i)
-
-    np.array_equal(np.array(t), np.array(result), equal_nan=True)
-
-
-@given(t=st.tuples(st.complex_numbers()))
-def test_complex_tuple(t):
-    buffer = BytesIO()
-
-    to_file(t, buffer)
-
-    result = from_file(buffer)
-
-    for t_i, result_i in zip(t, result):
-        assert type(t_i) is type(result_i)
-
-    np.array_equal(np.array(t), np.array(result), equal_nan=True)
-
-
-@given(t=st.tuples(st.tuples(st.floats())))
-def test_nested_tuple(t):
-    buffer = BytesIO()
-
-    to_file(t, buffer)
-
-    result = from_file(buffer)
-
-    for t_i, result_i in zip(t, result):
-        assert type(t_i) is type(result_i)
-
-    np.array_equal(np.array(t), np.array(result), equal_nan=True)
-
-
-# @TODO good to add string here.
+        assert t_i == result_i

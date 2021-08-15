@@ -3,8 +3,6 @@
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-from pickle import dumps
-
 from h5py import (
     File,
     Group,
@@ -21,24 +19,27 @@ from hi5py._types import (
     FilePathBufferOrGroup,
     ToFileObjects,
 )
+from hi5py.lib import to_file_failure_handler
 
 
 def to_file(
-    obj: ToFileObjects,
+    object: ToFileObjects,
     path_buffer_or_group: FilePathBufferOrGroup,
     key: str = ".hi5",
     mode: Literal["w", "a", "r+"] = "w",
-    allow_pickle: Literal["raise", "skip", "warn", "save"] = "raise",
+    allow_pickle: Literal["fail", "skip", "warn", "save"] = "fail",
+    failure_callback=to_file_failure_handler,
 ) -> File:
     """Write `object` to a file.
 
     Parameters
     ----------
-    obj
+    object
     path_buffer_or_group
     key
     mode
     allow_pickle
+    failure_callback
 
     Returns
     -------
@@ -50,7 +51,7 @@ def to_file(
     path_buffer_or_group.attrs["__hi5_file_version__"] = __hi5_file_version__
 
     return _to_file_router(
-        obj, path_buffer_or_group, key, allow_pickle, _to_file_router
+        object, path_buffer_or_group, key, allow_pickle, _to_file_router
     )
 
 
@@ -59,8 +60,10 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
 
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(*args)
-    elif isinstance(obj, (int, float, complex)):
+    elif isinstance(obj, (int, float, complex, str)):
         _to_numeric(*args)
+    elif isinstance(obj, bytes):
+        _to_bytes(*args)
     elif isinstance(obj, (ndarray, generic)):
         _to_numpy_array(*args)
     elif isinstance(obj, (list, tuple)):
@@ -75,6 +78,22 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
 
 def _get_python_class(obj):
     return str(type(obj)).split("'")[1]
+
+
+def _to_bytes(obj, group, key, allow_pickle, callback):
+    attrs = {
+        "__python_class__": _get_python_class(obj),
+    }
+    try:
+
+        group[key] = np.void(obj)
+    except ValueError:
+        # If this is an empty byte string.
+        group[key] = ""
+
+    group[key].attrs.update(attrs)
+
+    return group[key]
 
 
 def _to_numeric(obj, group, key, allow_pickle, callback):
@@ -93,12 +112,6 @@ def _to_numeric(obj, group, key, allow_pickle, callback):
     return group[key]
 
 
-def _handle_pickle(obj, group, key, allow_pickle, callback):
-    if allow_pickle == "save":
-        byte_string = np.void(dumps(obj))
-        group[key] = byte_string
-
-
 def _to_numpy_array(obj, group, key, allow_pickle, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
@@ -106,7 +119,6 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
         "__bytes__": False,
         "__array__": isinstance(obj, ndarray),
         "__shape__": 0,
-        "__pickled__": False,
     }
 
     try:
@@ -125,7 +137,6 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         "__python_class__": _get_python_class(obj),
         "__as_array__": False,
         "__element_class__": 0,
-        "__pickled__": False,
     }
 
     try:
@@ -160,3 +171,18 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         group[key] = 0
 
     group[key].attrs.update(attrs)
+
+
+# I need to think about using this later, for now I'm thinking of placing it in
+# to_file_failure_handler
+#
+# def _handle_pickle(obj, group, key, allow_pickle, callback):
+#     if allow_pickle == "save":
+#         attrs = {
+#             "__python_class__": _get_python_class(obj),
+#         }
+#
+#         byte_string = np.void(dumps(obj))
+#         group[key] = byte_string
+#
+#         return group[key]

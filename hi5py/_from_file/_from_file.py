@@ -18,7 +18,7 @@ def from_file(
     path_buffer_or_group: FilePathBufferOrGroup,
     key: str = ".hi5",
     mode: Literal["r", "r+", "a"] = "r",
-    allow_pickle: Literal["raise", "skip", "warn", "load"] = "raise",
+    allow_pickle: Literal["fail", "skip", "warn", "load"] = "fail",
 ):
     """Read a file and close if we `path` is opened.
 

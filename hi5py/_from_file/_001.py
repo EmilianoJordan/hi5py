@@ -2,21 +2,21 @@ from h5py import Group
 import numpy as np
 from typing_extensions import Literal
 
-from hi5py._from_file._lib import _class_from_string
+from hi5py.lib import _class_from_string
 
 
 def _001(
     group: Group,
-    allow_pickle: Literal["raise", "skip", "warn", "load"],
+    allow_pickle: Literal["fail", "skip", "warn", "load"],
 ):
-    # print({key:val for key, val in group.attrs.items()})
-    # print(group[()].dtype)
-    # pass
+
     klass = _class_from_string(group.attrs["__python_class__"])
 
     if hasattr(klass, "__from_hi5py__"):
         return klass.__from_hi5py__(group, allow_pickle, klass, _001)
-    if issubclass(klass, (int, float, complex)):
+    if issubclass(klass, (int, float, complex, str)):
+        return klass(group[()])
+    if issubclass(klass, bytes):
         return klass(group[()])
     if issubclass(klass, (np.ndarray, np.generic)):
         if not group.attrs["__bytes__"]:

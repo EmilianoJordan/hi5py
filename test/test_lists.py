@@ -1,4 +1,5 @@
 from io import BytesIO
+from string import printable
 
 from hypothesis import (
     example,
@@ -13,7 +14,11 @@ from hi5py import (
 )
 
 
-@given(t=st.lists(st.integers()))
+@given(
+    t=st.lists(
+        st.integers() | st.floats() | st.complex_numbers() | st.text(printable)
+    )
+)
 @example(list())
 def test_int_list(t):
     buffer = BytesIO()
@@ -24,35 +29,22 @@ def test_int_list(t):
 
     for t_i, result_i in zip(t, result):
         assert type(t_i) is type(result_i)
-        assert t_i == result_i or t_i is result_i
+        try:
+            if np.isnan(t_i) and np.isnan(result_i):
+                continue
+        except TypeError:
+            pass
+
+        assert t_i == result_i
 
 
-@given(t=st.lists(st.floats()))
-def test_float_list(t):
+@given(t=st.text(printable))
+def test_strings(t):
     buffer = BytesIO()
 
     to_file(t, buffer)
 
     result = from_file(buffer)
 
-    for t_i, result_i in zip(t, result):
-        assert type(t_i) is type(result_i)
-
-    np.array_equal(np.array(t), np.array(result), equal_nan=True)
-
-
-@given(t=st.lists(st.complex_numbers()))
-def test_complex_list(t):
-    buffer = BytesIO()
-
-    to_file(t, buffer)
-
-    result = from_file(buffer)
-
-    for t_i, result_i in zip(t, result):
-        assert type(t_i) is type(result_i)
-
-    np.array_equal(np.array(t), np.array(result), equal_nan=True)
-
-
-# @TODO good to add string here.
+    assert type(t) is type(result)
+    assert t == result
