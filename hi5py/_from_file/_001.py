@@ -14,10 +14,10 @@ def _001(
 
     if hasattr(klass, "__from_hi5py__"):
         return klass.__from_hi5py__(group, allow_pickle, klass, _001)
-    if issubclass(klass, (int, float, complex, str)):
+    if issubclass(klass, (int, float, complex, bytes)):
         return klass(group[()])
-    if issubclass(klass, bytes):
-        return klass(group[()])
+    if issubclass(klass, str):
+        return group[()].decode()
     if issubclass(klass, (np.ndarray, np.generic)):
         if not group.attrs["__bytes__"]:
             return group[()]
