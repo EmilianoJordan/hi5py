@@ -3,6 +3,11 @@
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+from sys import (
+    platform,
+    version,
+)
+
 from h5py import (
     File,
     Group,
@@ -20,6 +25,13 @@ from hi5py._types import (
     ToFileObjects,
 )
 from hi5py.lib import to_file_failure_handler
+
+FILE_ATTRS = {
+    "__hi5_file_version__": __hi5_file_version__,
+    "__py_version__": version,
+    "__os__": platform,
+    "__np_version": np.__version__,
+}
 
 
 def to_file(
@@ -48,15 +60,16 @@ def to_file(
     if not isinstance(path_buffer_or_group, (Group, File)):
         path_buffer_or_group = File(path_buffer_or_group, mode=mode)
 
-    path_buffer_or_group.attrs["__hi5_file_version__"] = __hi5_file_version__
+    path_buffer_or_group.attrs.update(FILE_ATTRS)
 
     return _to_file_router(
         object, path_buffer_or_group, key, allow_pickle, _to_file_router
     )
 
 
-def _to_file_router(obj, group, key, allow_pickle, callback):
-    args = (obj, group, key, allow_pickle, callback)
+def _to_file_router(*args):
+    # args = (obj, group, key, allow_pickle, callback)
+    obj = args[0]
 
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(*args)
@@ -69,11 +82,7 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
     elif isinstance(obj, (list, tuple)):
         _to_tuple_list(*args)
     else:
-        # @TODO Need to incorporate pickle option here.
-        # @TODO Think about options for error handling. Might be nice
-        #   to offer some ability to capture or handle errors.
         raise TypeError("Cannot save data type.")
-    return group[key]
 
 
 def _get_python_class(obj):
@@ -93,8 +102,6 @@ def _to_bytes(obj, group, key, allow_pickle, callback):
 
     group[key].attrs.update(attrs)
 
-    return group[key]
-
 
 def _to_scalar(obj, group, key, allow_pickle, callback):
     attrs = {
@@ -103,13 +110,12 @@ def _to_scalar(obj, group, key, allow_pickle, callback):
     try:
         group[key] = obj
         group[key].attrs.update(attrs)
-        return group[key]
+        return
     except (TypeError, ValueError):
         pass
 
     group[key] = str(obj)
     group[key].attrs.update(attrs)
-    return group[key]
 
 
 def _to_numpy_array(obj, group, key, allow_pickle, callback):
@@ -132,7 +138,6 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
 
 
 def _to_tuple_list(obj, group, key, allow_pickle, callback):
-    # @TODO this is going to need to be adjusted for empty tuples.
     attrs = {
         "__python_class__": _get_python_class(obj),
         "__as_array__": False,
@@ -185,4 +190,4 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
 #         byte_string = np.void(dumps(obj))
 #         group[key] = byte_string
 #
-#         return group[key]
+#         return

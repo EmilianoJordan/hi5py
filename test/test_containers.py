@@ -1,5 +1,4 @@
 from io import BytesIO
-from string import printable
 
 from hypothesis import (
     example,
@@ -15,9 +14,7 @@ from hi5py import (
 
 
 @given(
-    t=st.lists(
-        st.integers() | st.floats() | st.complex_numbers() | st.text(printable)
-    )
+    t=st.lists(st.integers() | st.floats() | st.complex_numbers() | st.text())
 )
 @example(list())
 def test_int_list(t):
@@ -39,9 +36,7 @@ def test_int_list(t):
 
 
 @given(
-    t=st.tuples(
-        st.integers() | st.floats() | st.complex_numbers(), st.text(printable)
-    )
+    t=st.tuples(st.integers() | st.floats() | st.complex_numbers(), st.text())
 )
 @example(tuple())
 def test_int_tuple(t):
