@@ -1,8 +1,6 @@
 from io import BytesIO
-from string import printable
 
 from hypothesis import (
-    example,
     given,
     strategies as st,
 )
@@ -15,12 +13,10 @@ from hi5py import (
 
 
 @given(
-    t=st.one_of(
-        st.integers() | st.floats() | st.complex_numbers() | st.text(printable)
-    )
+    t=st.one_of(st.integers() | st.floats() | st.complex_numbers() | st.text())
 )
-@example(tuple())
 def test_scalars(t):
+
     buffer = BytesIO()
 
     to_file(t, buffer)
@@ -29,4 +25,9 @@ def test_scalars(t):
 
     assert type(t) is type(result)
 
-    assert np.isnan(t) and np.isnan(result) or t == result
+    try:
+        assert np.array_equal(t, result, equal_nan=True)
+    except TypeError:
+        if t == result:
+            return
+        raise

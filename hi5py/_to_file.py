@@ -61,7 +61,7 @@ def _to_file_router(obj, group, key, allow_pickle, callback):
     if hasattr(obj, "__to_hi5py__"):
         obj.__to_hi5py__(*args)
     elif isinstance(obj, (int, float, complex, str)):
-        _to_numeric(*args)
+        _to_scalar(*args)
     elif isinstance(obj, bytes):
         _to_bytes(*args)
     elif isinstance(obj, (ndarray, generic)):
@@ -96,7 +96,7 @@ def _to_bytes(obj, group, key, allow_pickle, callback):
     return group[key]
 
 
-def _to_numeric(obj, group, key, allow_pickle, callback):
+def _to_scalar(obj, group, key, allow_pickle, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
     }
@@ -104,7 +104,7 @@ def _to_numeric(obj, group, key, allow_pickle, callback):
         group[key] = obj
         group[key].attrs.update(attrs)
         return group[key]
-    except TypeError:
+    except (TypeError, ValueError):
         pass
 
     group[key] = str(obj)
