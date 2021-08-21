@@ -9,7 +9,6 @@ def _001(
     group: Group,
     allow_pickle: Literal["fail", "skip", "warn", "load"],
 ):
-
     klass = _class_from_string(group.attrs["__python_class__"])
 
     if hasattr(klass, "__from_hi5py__"):
@@ -30,6 +29,27 @@ def _001(
         return array
     elif issubclass(klass, (tuple, list)):
         return from_list_tuple(group, allow_pickle, klass, _001)
+    elif issubclass(klass, dict):
+        return from_dict(group, allow_pickle, klass, _001)
+
+
+def from_dict(group, allow_pickle, klass, callback):
+    ret_obj = klass()
+
+    try:
+
+        for key in group.keys():
+            ret_obj[callback(group[key + "/key"], allow_pickle)] = callback(
+                group[key + "/val"], allow_pickle
+            )
+
+    except AttributeError:
+        # groups with no keys were passed in as an empty tuple / list.
+        # h5py does not return an empty set of key,
+        # it throws an AttributeError in this case.
+        pass
+
+    return ret_obj
 
 
 def from_list_tuple(group, allow_pickle, klass, callback):
@@ -43,5 +63,6 @@ def from_list_tuple(group, allow_pickle, klass, callback):
         )
     except AttributeError:
         # groups with no keys were passed in as an empty tuple / list.
-        # h5py does not return no keys it throws an AttributeError in this case.
+        # h5py does not return an empty set of key,
+        # it throws an AttributeError in this case.
         return klass()

@@ -72,15 +72,17 @@ def _to_file_router(*args):
     obj = args[0]
 
     if hasattr(obj, "__to_hi5py__"):
-        obj.__to_hi5py__(*args)
+        return obj.__to_hi5py__(*args)
     elif isinstance(obj, (int, float, complex, str)):
-        _to_scalar(*args)
+        return _to_scalar(*args)
     elif isinstance(obj, bytes):
-        _to_bytes(*args)
+        return _to_bytes(*args)
     elif isinstance(obj, (ndarray, generic)):
-        _to_numpy_array(*args)
+        return _to_numpy_array(*args)
     elif isinstance(obj, (list, tuple)):
-        _to_tuple_list(*args)
+        return _to_tuple_list(*args)
+    elif isinstance(obj, dict):
+        return _to_dict(*args)
     else:
         raise TypeError("Cannot save data type.")
 
@@ -101,21 +103,26 @@ def _to_bytes(obj, group, key, allow_pickle, callback):
         group[key] = ""
 
     group[key].attrs.update(attrs)
+    return group[key]
 
 
-def _to_scalar(obj, group, key, allow_pickle, callback):
+def _to_dict(obj, group, key, allow_pickle, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
     }
-    try:
-        group[key] = obj
-        group[key].attrs.update(attrs)
-        return
-    except (TypeError, ValueError):
-        pass
 
-    group[key] = str(obj)
+    elements = len(obj)
+    if elements > 0:
+        padding = len(str(elements))
+        for i, (k, v) in enumerate(obj.items()):
+            sub_key = f"{key}/{i:0{padding}}"
+            callback(k, group, sub_key + "/key", allow_pickle, callback)
+            callback(v, group, sub_key + "/val", allow_pickle, callback)
+    else:
+        group[key] = 0
+
     group[key].attrs.update(attrs)
+    return group[key]
 
 
 def _to_numpy_array(obj, group, key, allow_pickle, callback):
@@ -135,6 +142,25 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
         attrs["__shape__"] = obj.shape
 
     group[key].attrs.update(attrs)
+    return group[key]
+
+
+def _to_scalar(obj, group, key, allow_pickle, callback):
+    attrs = {
+        "__python_class__": _get_python_class(obj),
+    }
+    try:
+        group[key] = obj
+        group[key].attrs.update(attrs)
+        return
+    except TypeError:
+        group[key] = str(obj)
+    except ValueError:
+        if isinstance(obj, str):
+            group[key] = np.string_(obj)
+
+    group[key].attrs.update(attrs)
+    return group[key]
 
 
 def _to_tuple_list(obj, group, key, allow_pickle, callback):
@@ -159,7 +185,7 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         group[key] = obj_as_array
         attrs["__as_array__"] = True
         group[key].attrs.update(attrs)
-        return
+        return group[key]
     except (TypeError, KeyError):
         # TypeError: `group[key] = obj_as_array` if the object is not saveable as an
         #             array.
@@ -176,6 +202,7 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         group[key] = 0
 
     group[key].attrs.update(attrs)
+    return group[key]
 
 
 # I need to think about using this later, for now I'm thinking of placing it in
