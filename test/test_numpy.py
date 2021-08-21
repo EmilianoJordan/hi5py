@@ -14,7 +14,6 @@ from hypothesis.extra.numpy import (
     unicode_string_dtypes,
 )
 import numpy as np
-from numpy import isnan
 
 from hi5py import (
     from_file,
@@ -22,7 +21,7 @@ from hi5py import (
 )
 
 
-@given(a=arrays(integer_dtypes(), (3, 3, 3)))
+@given(a=arrays(integer_dtypes(), array_shapes()))
 def test_int_arrays(a):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -30,10 +29,11 @@ def test_int_arrays(a):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
     assert np.all(np.array_equal(a, result))
 
 
-@given(a=arrays(floating_dtypes(), (3, 3, 3)))
+@given(a=arrays(floating_dtypes(), array_shapes()))
 def test_floating_arrays(a):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -41,10 +41,11 @@ def test_floating_arrays(a):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
     assert np.all(np.array_equal(a, result, equal_nan=True))
 
 
-@given(a=arrays(complex_number_dtypes(), (3, 3, 3)))
+@given(a=arrays(complex_number_dtypes(), array_shapes()))
 def test_complex_arrays(a):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -52,10 +53,11 @@ def test_complex_arrays(a):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
     assert np.all(np.array_equal(a, result, equal_nan=True))
 
 
-@given(a=arrays(scalar_dtypes(), (3, 3, 3)))
+@given(a=arrays(scalar_dtypes(), array_shapes()))
 def test_scalar_arrays(a):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -63,23 +65,11 @@ def test_scalar_arrays(a):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
     assert np.all(np.array_equal(a, result, equal_nan=True))
 
 
-@given(a=arrays(scalar_dtypes(), (3, 3, 3)))
-def test_scalar(a):
-    a = a[1, 1, 1]
-    buffer = BytesIO()
-    to_file(a, buffer)
-
-    result = from_file(buffer)
-
-    assert a.dtype == result.dtype, "dtypes do not match."
-    if not isnan(a) and not isnan(result):
-        assert a == result
-
-
-@given(a=arrays(datetime64_dtypes(), (3, 3, 3)))
+@given(a=arrays(datetime64_dtypes(), array_shapes()))
 def test_datetime_arrays(a):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -87,10 +77,11 @@ def test_datetime_arrays(a):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
     assert np.all(np.array_equal(a, result, equal_nan=True))
 
 
-@given(a=arrays(timedelta64_dtypes(), (3, 3, 3)))
+@given(a=arrays(timedelta64_dtypes(), array_shapes()))
 def test_timedelta_arrays(a):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -98,10 +89,11 @@ def test_timedelta_arrays(a):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
     assert np.all(np.array_equal(a, result, equal_nan=True))
 
 
-@given(a=arrays(byte_string_dtypes(), (3, 3, 3)))
+@given(a=arrays(byte_string_dtypes(), array_shapes()))
 def test_byte_string_arrays(a: np.ndarray):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -109,6 +101,7 @@ def test_byte_string_arrays(a: np.ndarray):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
     assert a.shape == result.shape
 
     a = a.reshape(a.size)
@@ -118,7 +111,7 @@ def test_byte_string_arrays(a: np.ndarray):
         assert a_i == result_i
 
 
-@given(a=arrays(unicode_string_dtypes(), (3, 3, 3)))
+@given(a=arrays(unicode_string_dtypes(), array_shapes()))
 def test_unicode_string_arrays(a):
     buffer = BytesIO()
     to_file(a, buffer)
@@ -126,26 +119,7 @@ def test_unicode_string_arrays(a):
     result = from_file(buffer)
 
     assert a.dtype == result.dtype, "dtypes do not match."
-    assert a.shape == result.shape, "array shapes do not match."
-
-    a = a.reshape(a.size)
-    result = result.reshape(result.size)
-
-    for a_i, result_i in zip(a, result):
-        assert a_i == result_i
-
-
-@given(a=arrays(unicode_string_dtypes(), array_shapes()))
-def test_unique_shapes(a):
-    # This test needs to force to/from file to take the tobytes path for numpy so
-    # that the reshape command is used.
-    buffer = BytesIO()
-    to_file(a, buffer)
-
-    result = from_file(buffer)
-
-    assert a.dtype == result.dtype, "dtypes do not match."
-    assert a.shape == result.shape, "array shapes do not match."
+    assert a.shape == result.shape, "Array shapes do not match"
 
     a = a.reshape(a.size)
     result = result.reshape(result.size)
