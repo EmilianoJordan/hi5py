@@ -22,7 +22,7 @@ def _001(
             return group[()]
 
         array = np.frombuffer(
-            group[()].tobytes(), dtype=group.attrs["__dtype__"]
+            group[()].tobytes(),  # dtype=group.attrs["__dtype__"]
         )
         if group.attrs["__array__"]:
             return np.reshape(array, group.attrs["__shape__"])

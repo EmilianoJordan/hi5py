@@ -3,10 +3,12 @@
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+import pickle
 from sys import (
     platform,
     version,
 )
+from warnings import warn
 
 from h5py import (
     File,
@@ -131,7 +133,7 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
         "__dtype__": str(obj.dtype),
         "__bytes__": False,
         "__array__": isinstance(obj, ndarray),
-        "__shape__": 0,
+        "__shape__": obj.shape,
     }
 
     try:
@@ -139,25 +141,37 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
     except TypeError:
         group[key] = np.void(obj.tobytes())
         attrs["__bytes__"] = True
-        attrs["__shape__"] = obj.shape
 
     group[key].attrs.update(attrs)
     return group[key]
 
 
 def _to_scalar(obj, group, key, allow_pickle, callback):
+
     attrs = {
         "__python_class__": _get_python_class(obj),
     }
+
     try:
+
         group[key] = obj
         group[key].attrs.update(attrs)
         return
+
     except TypeError:
+
         group[key] = str(obj)
+
     except ValueError:
+
         if isinstance(obj, str):
+            # some non-printable characters can cause errors when saving if not cast
+            # to a numpy string.
             group[key] = np.string_(obj)
+
+        else:
+
+            raise
 
     group[key].attrs.update(attrs)
     return group[key]
@@ -205,16 +219,44 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
     return group[key]
 
 
-# I need to think about using this later, for now I'm thinking of placing it in
-# to_file_failure_handler
-#
-# def _handle_pickle(obj, group, key, allow_pickle, callback):
-#     if allow_pickle == "save":
-#         attrs = {
-#             "__python_class__": _get_python_class(obj),
-#         }
-#
-#         byte_string = np.void(dumps(obj))
-#         group[key] = byte_string
-#
-#         return
+def _handle_pickle(obj, group, key, allow_pickle, callback):
+    python_class = _get_python_class(obj)
+
+    if allow_pickle == "save":
+        attrs = {"__python_class__": python_class, "__pickled__": True}
+
+        group[key] = np.void(pickle.dumps(obj))
+        group[key].attrs.update(attrs)
+
+        return group[key]
+
+    elif allow_pickle == "raise":
+
+        full_path = group.name
+        if full_path[-1] == "/":
+            full_path += key
+        else:
+            full_path = full_path + "/" + key
+
+        raise TypeError(
+            f'Cannot save class "{python_class}" to key "{full_path}".'
+        )
+
+    elif allow_pickle == "warn":
+
+        full_path = group.name
+
+        if full_path[-1] == "/":
+            full_path += key
+        else:
+            full_path = full_path + "/" + key
+
+        raise warn(f'Cannot save class "{python_class}" to key "{full_path}".')
+
+    elif allow_pickle == "skip":
+        pass
+
+    else:
+        ValueError(
+            f'Allow pickle allows ["fail", "skip", "warn", "save"] not "{allow_pickle}"'
+        )

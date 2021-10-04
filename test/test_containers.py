@@ -14,6 +14,18 @@ from hi5py import (
 )
 
 
+def _assert_two_iterables(a, b):
+    for a_i, b_i in zip(a, b):
+        assert type(a_i) is type(b_i)
+        try:
+            if np.isnan(a_i) and np.isnan(b_i):
+                continue
+        except TypeError:
+            pass
+
+        assert a_i == b_i
+
+
 @given(
     t=st.lists(st.integers() | st.floats() | st.complex_numbers() | st.text())
 )
@@ -25,15 +37,7 @@ def test_list(t):
 
     result = from_file(buffer)
 
-    for t_i, result_i in zip(t, result):
-        assert type(t_i) is type(result_i)
-        try:
-            if np.isnan(t_i) and np.isnan(result_i):
-                continue
-        except TypeError:
-            pass
-
-        assert t_i == result_i
+    _assert_two_iterables(t, result)
 
 
 @given(
@@ -47,15 +51,7 @@ def test_tuple(t):
 
     result = from_file(buffer)
 
-    for t_i, result_i in zip(t, result):
-        assert type(t_i) is type(result_i)
-        try:
-            if np.isnan(t_i) and np.isnan(result_i):
-                continue
-        except TypeError:
-            pass
-
-        assert t_i == result_i
+    _assert_two_iterables(t, result)
 
 
 @given(
@@ -76,29 +72,11 @@ def test_tuple(t):
 )
 @example(dict())
 def test_dicts(t):
-
     buffer = BytesIO()
 
     to_file(t, buffer)
 
     result: dict = from_file(buffer)
 
-    for t_k, result_k in zip(t.keys(), result.keys()):
-        assert type(t_k) is type(result_k)
-        try:
-            if np.isnan(t_k) and np.isnan(result_k):
-                continue
-        except TypeError:
-            pass
-
-        assert t_k == result_k
-
-    for t_v, result_v in zip(t.values(), result.values()):
-        assert type(t_v) is type(result_v)
-        try:
-            if np.isnan(t_v) and np.isnan(result_v):
-                continue
-        except TypeError:
-            pass
-
-        assert t_v == result_v
+    _assert_two_iterables(t.keys(), result.keys())
+    _assert_two_iterables(t.values(), result.values())
