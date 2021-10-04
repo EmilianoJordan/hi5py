@@ -8,6 +8,7 @@ from hypothesis.extra.numpy import (
     arrays,
     scalar_dtypes,
 )
+from hypothesis.strategies import characters
 import numpy as np
 from numpy import isnan
 
@@ -18,7 +19,12 @@ from hi5py import (
 
 
 @given(
-    t=st.one_of(st.integers() | st.floats() | st.complex_numbers() | st.text())
+    t=st.one_of(
+        st.integers(),
+        st.floats(),
+        st.complex_numbers(),
+        st.text(alphabet=characters()),
+    )
 )
 def test_scalars(t):
     buffer = BytesIO()
@@ -27,12 +33,13 @@ def test_scalars(t):
 
     result = from_file(buffer)
 
-    assert type(t) is type(result)
+    assert type(result) is type(t)
 
     try:
-        assert np.array_equal(t, result, equal_nan=True)
-    except TypeError:
-        if t == result:
+        assert result == t
+    except AssertionError:
+        # because np.nan != np.nan we need to try this to capture that edge case.
+        if np.array_equal(result, t, equal_nan=True):
             return
         raise
 
@@ -40,11 +47,16 @@ def test_scalars(t):
 @given(a=arrays(scalar_dtypes(), 1))
 def test_scalar(a):
     a = a[0]
+
     buffer = BytesIO()
     to_file(a, buffer)
 
     result = from_file(buffer)
 
-    assert a.dtype == result.dtype, "dtypes do not match."
+    try:
+        assert result.dtype == a.dtype, "dtypes do not match."
+    except AssertionError:
+        assert result.dtype == a.dtype, "dtypes do not match."
+
     if not isnan(a) and not isnan(result):
-        assert a == result
+        assert result == a

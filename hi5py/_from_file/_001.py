@@ -18,19 +18,26 @@ def _001(
     if issubclass(klass, str):
         return group[()].decode()
     if issubclass(klass, (np.ndarray, np.generic)):
-        if not group.attrs["__bytes__"]:
-            return group[()]
-
-        array = np.frombuffer(
-            group[()].tobytes(),  # dtype=group.attrs["__dtype__"]
-        )
-        if group.attrs["__array__"]:
-            return np.reshape(array, group.attrs["__shape__"])
-        return array
+        return from_numpy(group, allow_pickle, klass, _001)
     elif issubclass(klass, (tuple, list)):
         return from_list_tuple(group, allow_pickle, klass, _001)
     elif issubclass(klass, dict):
         return from_dict(group, allow_pickle, klass, _001)
+
+
+def from_numpy(group, allow_pickle, klass, callback):
+    if not group.attrs["__bytes__"]:
+        return group[()]
+
+    array = np.frombuffer(group[()].tobytes(), dtype=group.attrs["__dtype__"])
+
+    if group.attrs["__array__"]:
+        array = np.reshape(array, group.attrs["__shape__"])
+
+    if str(array.dtype) != group.attrs["__dtype__"]:
+        array = array.astype(group.attrs["__dtype__"])
+
+    return array
 
 
 def from_dict(group, allow_pickle, klass, callback):

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import hypothesis
 from pytest import fixture
 
 
@@ -14,14 +13,3 @@ def hi5_data_dir_path() -> Path:
     a matrix of python and packages.
     """
     return Path(__file__).parent / "data"
-
-
-# #################################################################################### #
-#                                Hypothesis Setup
-# #################################################################################### #
-
-hypothesis.settings.register_profile(
-    "dev",
-    print_blob=True,
-)
-hypothesis.settings.load_profile("dev")
