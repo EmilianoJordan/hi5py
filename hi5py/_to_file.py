@@ -150,6 +150,7 @@ def _to_scalar(obj, group, key, allow_pickle, callback):
 
     attrs = {
         "__python_class__": _get_python_class(obj),
+        "__encoded__": False,
     }
 
     try:
@@ -164,14 +165,11 @@ def _to_scalar(obj, group, key, allow_pickle, callback):
 
     except ValueError:
 
-        if isinstance(obj, str):
-            # some non-printable characters can cause errors when saving if not cast
-            # to a numpy string.
-            group[key] = np.string_(obj)
-
-        else:
-
+        if not isinstance(obj, str):
             raise
+
+        group[key] = np.void(obj.encode("utf-32"))
+        attrs["__encoded__"] = "utf-32"
 
     group[key].attrs.update(attrs)
     return group[key]

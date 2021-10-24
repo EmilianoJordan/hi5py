@@ -6,7 +6,6 @@ from hypothesis import (
     given,
     strategies as st,
 )
-from hypothesis.strategies import characters
 import numpy as np
 
 from hi5py import (
@@ -32,10 +31,9 @@ def _assert_two_iterables(a, b):
         st.integers()
         | st.floats()
         | st.complex_numbers()
-        | st.text(alphabet=characters())
+        | st.text(alphabet=printable)
     )
 )
-@example(list())
 def test_list(t):
     buffer = BytesIO()
 
@@ -48,10 +46,7 @@ def test_list(t):
 
 @given(
     t=st.tuples(
-        st.integers()
-        | st.floats()
-        | st.complex_numbers()
-        | st.text(alphabet=characters())
+        st.integers() | st.floats() | st.complex_numbers() | st.text(printable)
     )
 )
 @example(tuple())
@@ -81,7 +76,6 @@ def test_tuple(t):
         ),
     )
 )
-@example(dict())
 def test_dicts(t):
     buffer = BytesIO()
 

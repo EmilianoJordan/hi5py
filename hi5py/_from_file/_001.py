@@ -16,13 +16,19 @@ def _001(
     if issubclass(klass, (int, float, complex, bytes)):
         return klass(group[()])
     if issubclass(klass, str):
-        return group[()].decode()
+        return from_scalar(group, allow_pickle, klass, _001)
     if issubclass(klass, (np.ndarray, np.generic)):
         return from_numpy(group, allow_pickle, klass, _001)
     elif issubclass(klass, (tuple, list)):
         return from_list_tuple(group, allow_pickle, klass, _001)
     elif issubclass(klass, dict):
         return from_dict(group, allow_pickle, klass, _001)
+
+
+def from_scalar(group, allow_pickle, klass, callback):
+    if group.attrs["__encoded__"]:
+        return group[()].tobytes().decode(group.attrs["__encoded__"])
+    return group[()].decode()
 
 
 def from_numpy(group, allow_pickle, klass, callback):
