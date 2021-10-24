@@ -3,12 +3,10 @@
 #   file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import pickle
 from sys import (
     platform,
     version,
 )
-from warnings import warn
 
 from h5py import (
     File,
@@ -26,7 +24,6 @@ from hi5py._types import (
     FilePathBufferOrGroup,
     ToFileObjects,
 )
-from hi5py.lib import to_file_failure_handler
 
 FILE_ATTRS = {
     "__hi5_file_version__": __hi5_file_version__,
@@ -41,8 +38,6 @@ def to_file(
     path_buffer_or_group: FilePathBufferOrGroup,
     key: str = ".hi5",
     mode: Literal["w", "a", "r+"] = "w",
-    allow_pickle: Literal["fail", "skip", "warn", "save"] = "fail",
-    failure_callback=to_file_failure_handler,
 ) -> File:
     """Write `object` to a file.
 
@@ -52,7 +47,6 @@ def to_file(
     path_buffer_or_group
     key
     mode
-    allow_pickle
     failure_callback
 
     Returns
@@ -64,13 +58,10 @@ def to_file(
 
     path_buffer_or_group.attrs.update(FILE_ATTRS)
 
-    return _to_file_router(
-        object, path_buffer_or_group, key, allow_pickle, _to_file_router
-    )
+    return _to_file_router(object, path_buffer_or_group, key, _to_file_router)
 
 
 def _to_file_router(*args):
-    # args = (obj, group, key, allow_pickle, callback)
     obj = args[0]
 
     if hasattr(obj, "__to_hi5py__"):
@@ -93,7 +84,7 @@ def _get_python_class(obj):
     return str(type(obj)).split("'")[1]
 
 
-def _to_bytes(obj, group, key, allow_pickle, callback):
+def _to_bytes(obj, group, key, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
     }
@@ -108,7 +99,7 @@ def _to_bytes(obj, group, key, allow_pickle, callback):
     return group[key]
 
 
-def _to_dict(obj, group, key, allow_pickle, callback):
+def _to_dict(obj, group, key, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
     }
@@ -118,8 +109,8 @@ def _to_dict(obj, group, key, allow_pickle, callback):
         padding = len(str(elements))
         for i, (k, v) in enumerate(obj.items()):
             sub_key = f"{key}/{i:0{padding}}"
-            callback(k, group, sub_key + "/key", allow_pickle, callback)
-            callback(v, group, sub_key + "/val", allow_pickle, callback)
+            callback(k, group, sub_key + "/key", callback)
+            callback(v, group, sub_key + "/val", callback)
     else:
         group[key] = 0
 
@@ -127,7 +118,7 @@ def _to_dict(obj, group, key, allow_pickle, callback):
     return group[key]
 
 
-def _to_numpy_array(obj, group, key, allow_pickle, callback):
+def _to_numpy_array(obj, group, key, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
         "__dtype__": str(obj.dtype),
@@ -146,7 +137,7 @@ def _to_numpy_array(obj, group, key, allow_pickle, callback):
     return group[key]
 
 
-def _to_scalar(obj, group, key, allow_pickle, callback):
+def _to_scalar(obj, group, key, callback):
 
     attrs = {
         "__python_class__": _get_python_class(obj),
@@ -175,7 +166,7 @@ def _to_scalar(obj, group, key, allow_pickle, callback):
     return group[key]
 
 
-def _to_tuple_list(obj, group, key, allow_pickle, callback):
+def _to_tuple_list(obj, group, key, callback):
     attrs = {
         "__python_class__": _get_python_class(obj),
         "__as_array__": False,
@@ -209,52 +200,9 @@ def _to_tuple_list(obj, group, key, allow_pickle, callback):
         padding = len(str(elements))
         for i, o in enumerate(obj):
             sub_key = f"{key}/{i:0{padding}}"
-            callback(o, group, sub_key, allow_pickle, callback)
+            callback(o, group, sub_key, callback)
     else:
         group[key] = 0
 
     group[key].attrs.update(attrs)
     return group[key]
-
-
-def _handle_pickle(obj, group, key, allow_pickle, callback):
-    python_class = _get_python_class(obj)
-
-    if allow_pickle == "save":
-        attrs = {"__python_class__": python_class, "__pickled__": True}
-
-        group[key] = np.void(pickle.dumps(obj))
-        group[key].attrs.update(attrs)
-
-        return group[key]
-
-    elif allow_pickle == "raise":
-
-        full_path = group.name
-        if full_path[-1] == "/":
-            full_path += key
-        else:
-            full_path = full_path + "/" + key
-
-        raise TypeError(
-            f'Cannot save class "{python_class}" to key "{full_path}".'
-        )
-
-    elif allow_pickle == "warn":
-
-        full_path = group.name
-
-        if full_path[-1] == "/":
-            full_path += key
-        else:
-            full_path = full_path + "/" + key
-
-        raise warn(f'Cannot save class "{python_class}" to key "{full_path}".')
-
-    elif allow_pickle == "skip":
-        pass
-
-    else:
-        ValueError(
-            f'Allow pickle allows ["fail", "skip", "warn", "save"] not "{allow_pickle}"'
-        )

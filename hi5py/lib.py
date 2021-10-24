@@ -19,7 +19,3 @@ def _class_from_string(class_string: str):
         return might_be_class
 
     raise ImportError(f"Cannot load '{class_string}'")
-
-
-def to_file_failure_handler(obj, group, key, allow_pickle, callback):
-    pass

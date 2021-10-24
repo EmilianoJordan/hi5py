@@ -18,7 +18,6 @@ def from_file(
     path_buffer_or_group: FilePathBufferOrGroup,
     key: str = ".hi5",
     mode: Literal["r", "r+", "a"] = "r",
-    allow_pickle: Literal["raise", "skip", "warn", "load"] = "raise",
 ):
     """Read a file and close if we `path` is opened.
 
@@ -29,7 +28,6 @@ def from_file(
     path_buffer_or_group
     key
     mode
-    allow_pickle
 
     Returns
     -------
@@ -42,4 +40,4 @@ def from_file(
         "__hi5_file_version__", __hi5_file_version__
     )
 
-    return from_file_lookup[version](path_buffer_or_group[key], allow_pickle)
+    return from_file_lookup[version](path_buffer_or_group[key])

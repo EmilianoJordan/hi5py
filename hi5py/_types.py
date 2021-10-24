@@ -13,7 +13,6 @@ from typing import (
 
 from h5py import Group
 from numpy.typing import ArrayLike
-from typing_extensions import Literal
 
 T = TypeVar("T")
 
@@ -24,7 +23,6 @@ class HasDunderMethods(Generic[T]):
         self,
         group: Group,
         key: str,
-        allow_pickle: Literal["fail", "skip", "warn", "save"],
         callback: Callable[["ToFileObjects", Group, str, str, Callable], None],
     ) -> None:
         pass
@@ -32,7 +30,6 @@ class HasDunderMethods(Generic[T]):
     def __from_hi5py__(
         self,
         group: Group,
-        allow_pickle: Literal["fail", "skip", "warn", "load"],
         callback: Callable[[Group, str, Callable], Any],
     ) -> T:
         pass
